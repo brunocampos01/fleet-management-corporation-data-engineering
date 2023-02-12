@@ -1,6 +1,8 @@
 import importlib.resources
+import importlib.resources
 import unittest
 
+import pyspark
 from pyspark import Row
 from pyspark.sql import DataFrame
 
@@ -8,6 +10,11 @@ from app.detector import (
     load_tracking,
     detect_speeding_events,
     predict_speeding_event,
+    get_same_ride,
+    add_previous_location_and_time,
+    calculate_distance,
+    calculate_time_delta,
+    calculate_speed,
 )
 
 
@@ -79,6 +86,45 @@ class TestDetector(unittest.TestCase):
         event = self._get_nth_speeding_event(0)
         self.assertAlmostEqual(event["location_x"], 65.1861835687)
         self.assertAlmostEqual(event["location_y"], 6.9766616674)
+
+    # new tests
+    def test_get_same_ride(self):
+        window = get_same_ride()
+        self.assertIsInstance(window, pyspark.sql.window.WindowSpec)
+
+    def test_detect_speeding_events_output(self):
+        SECONDS_PER_HOUR = 3600
+        window = get_same_ride()
+
+        # output
+        logs = add_previous_location_and_time(self.speeding_events, window)
+        self.assertIsInstance(logs, DataFrame)
+        logs = calculate_distance(logs)
+        self.assertIsInstance(logs, DataFrame)
+        logs = calculate_time_delta(logs, SECONDS_PER_HOUR)
+        self.assertIsInstance(logs, DataFrame)
+        logs = calculate_speed(logs)
+        self.assertIsInstance(logs, DataFrame)
+        logs = detect_speeding_events(logs)
+        self.assertIsInstance(logs, DataFrame)
+
+    def test_detect_speeding_events_schema(self):
+        SECONDS_PER_HOUR = 3600
+        window = get_same_ride()
+
+        logs = add_previous_location_and_time(self.speeding_events, window)
+        logs = calculate_distance(logs)
+        logs = calculate_time_delta(logs, SECONDS_PER_HOUR)
+        logs = calculate_speed(logs)
+        logs = detect_speeding_events(logs)
+
+        # schema
+        self.assertTrue("prev_x" in logs.columns)
+        self.assertTrue("prev_y" in logs.columns)
+        self.assertTrue("prev_timespan" in logs.columns)
+        self.assertTrue("distance_km" in logs.columns)
+        self.assertTrue("time_hours" in logs.columns)
+        self.assertTrue("speed" in logs.columns)
 
     def test_predict_speeding_event_adds_actually_speeding_column(self):
         self.assertTrue("actually_speeding" in self.predictions.columns)

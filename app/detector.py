@@ -85,8 +85,7 @@ def predict_speeding_event(
 
 
 if __name__ == '__main__':
-    df = get_spark().read.json(
-        "/home/campos/projects/able_challenge/7b301fd0-f915-4436-9aac-710a55bc33f0/test/resources/sample.jsonl")
+    df = get_spark().read.json("../test/resources/sample.jsonl")
     df.printSchema()
     df.show()
 
@@ -94,5 +93,6 @@ if __name__ == '__main__':
     df = detect_speeding_events(df)
     df.show(n=50)
 
-    # df = predict_speeding_event(logs_with_speeding=df, prediction_horizon=10)
-    # df.show(n=50)
+    # 2
+    df = predict_speeding_event(logs_with_speeding=df, prediction_horizon=10)
+    df.show(n=50)
