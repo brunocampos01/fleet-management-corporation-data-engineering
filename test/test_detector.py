@@ -22,11 +22,13 @@ class TestDetector(unittest.TestCase):
     TEST_TYPE = "test"
     DATA = "sample.jsonl"
     HORIZON = 10
+    SECONDS_PER_HOUR = 3600
 
     @classmethod
     def setUpClass(cls) -> None:
         cls.speeding_events = cls._get_speeding_events(cls.DATA).cache()
         cls.predictions = cls._get_predictions(cls.DATA, cls.HORIZON).cache()
+        cls.window = get_same_ride()
 
     @classmethod
     def _get_logs(cls, filename: str) -> DataFrame:
@@ -93,15 +95,11 @@ class TestDetector(unittest.TestCase):
         self.assertIsInstance(window, pyspark.sql.window.WindowSpec)
 
     def test_detect_speeding_events_output(self):
-        SECONDS_PER_HOUR = 3600
-        window = get_same_ride()
-
-        # output
-        logs = add_previous_location_and_time(self.speeding_events, window)
+        logs = add_previous_location_and_time(self.speeding_events, self.window)
         self.assertIsInstance(logs, DataFrame)
         logs = calculate_distance(logs)
         self.assertIsInstance(logs, DataFrame)
-        logs = calculate_time_delta(logs, SECONDS_PER_HOUR)
+        logs = calculate_time_delta(logs, self.SECONDS_PER_HOUR)
         self.assertIsInstance(logs, DataFrame)
         logs = calculate_speed(logs)
         self.assertIsInstance(logs, DataFrame)
@@ -109,12 +107,9 @@ class TestDetector(unittest.TestCase):
         self.assertIsInstance(logs, DataFrame)
 
     def test_detect_speeding_events_schema(self):
-        SECONDS_PER_HOUR = 3600
-        window = get_same_ride()
-
-        logs = add_previous_location_and_time(self.speeding_events, window)
+        logs = add_previous_location_and_time(self.speeding_events, self.window)
         logs = calculate_distance(logs)
-        logs = calculate_time_delta(logs, SECONDS_PER_HOUR)
+        logs = calculate_time_delta(logs, self.SECONDS_PER_HOUR)
         logs = calculate_speed(logs)
         logs = detect_speeding_events(logs)
 

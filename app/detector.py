@@ -1,4 +1,4 @@
-from functools import lru_cache
+from functools import lru_cache, reduce
 from os import PathLike
 
 import pyspark
@@ -28,6 +28,9 @@ def get_same_ride() -> pyspark.sql.window.WindowSpec:
 
 def add_previous_location_and_time(logs: DataFrame, window) -> DataFrame:
     """Adds columns with the previous location and time information."""
+    cols_dict = {'location_x': 'prev_x',
+                 'location_y': 'prev_y',
+                 'timespan': 'prev_timespan'}
     return logs\
         .withColumn('prev_x', F.lag('location_x').over(window)) \
         .withColumn('prev_y', F.lag('location_y').over(window)) \
@@ -43,7 +46,8 @@ def calculate_distance(logs: DataFrame) -> DataFrame:
 
 def calculate_time_delta(logs: DataFrame, SECONDS_PER_HOUR: int) -> DataFrame:
     """Calculates the time delta between the current and previous location in hours."""
-    return logs.withColumn("time_hours", (logs["timespan"] - logs["prev_timespan"]) / SECONDS_PER_HOUR)
+    return logs.withColumn("time_hours",
+                           (logs["timespan"] - logs["prev_timespan"]) / SECONDS_PER_HOUR)
 
 
 def calculate_speed(logs: DataFrame) -> DataFrame:
@@ -85,7 +89,7 @@ def predict_speeding_event(
 
 
 if __name__ == '__main__':
-    df = get_spark().read.json("../test/resources/sample.jsonl")
+    df = get_spark().read.json("test/resources/sample.jsonl")
     df.printSchema()
     df.show()
 

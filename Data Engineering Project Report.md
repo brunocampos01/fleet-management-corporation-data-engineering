@@ -1,21 +1,33 @@
+# Coding Challenges to Data Engineer
+When I finished to read the Notion, I review my code, to understand if is the suitable with Joel Test and the Core Values.
+
+### Changes
+- Add tests
+- Single Responsibility Principle
+- I believe that this improvements follow with CORE VALUES (Expect Excellence + Simplify to Solve)
+
 # Code Challenge
-## `detect_speeding_events()`
-I develop a Python code that provides by using the template method design pattern.
+## Task 01: [detect_speeding_events()](app/detector.py)
+I used the Template Method design pattern.
+The `detect_speeding_events()` is a skeleton for this algorithm and the other functions provide the implementation.
 <br/>
-The `detect_speeding_events()` function serves as a skeleton for this algorithm. The other fuctions implements the solutions.
-<br/>
-I decided use Pyspark instead of SparkSQL in this task because Pyspark provides a more flexible for working with DataFrames, and allowing us way to store the intermediate results.
 
-**NOTES:**
-- About hardcode columns: it's fine to hardcode some columns because 
+NOTES:
+- Pyspark instead of SparkSQL:
+  - More flexible
+  - Allow us way to store the intermediate results
+- [New tests](test/test_detector.py)
 
-## `predict_speeding_event()`
+
+## Task 02: [predict_speeding_event()](app/detector.py)
 In this case SparkSQL is better to understand the answer because provides a more concise and readable code.
 <br/>
-Note that the column names are defined as variables for improved code readability, making it easier to maintain the code if the column names change in the future.
+
+NOTES:
+- The column names are defined as variables for improved code readability, making it easier to maintain the code if the column names change in the future.
 
 # System Design
-This is not a requirement, but I am considering a good architecture for the problem of detecting events from GPS in real-time. I am focusing on using AWS services, but if necessary, I am open to discussing other cloud providers or open-source technologies.
+This is not a requirement, but I am considering a good architecture for the problem of **detecting events from GPS in real-time**. I am focusing on using AWS services, but if necessary, I am open to discussing other cloud providers or open-source technologies.
 
 
 <img src='images/data_architecture_aws.png' height=auto width="80%">
