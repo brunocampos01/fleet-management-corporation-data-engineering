@@ -8,6 +8,9 @@ from pyspark.sql import functions as F
 from pyspark.sql.window import Window
 
 
+SECONDS_PER_HOUR = 3600
+
+
 @lru_cache(maxsize=1)
 def get_spark():
     sc = SparkContext(master="local[1]", appName="Speeding detector")
@@ -28,9 +31,6 @@ def get_same_ride() -> pyspark.sql.window.WindowSpec:
 
 def add_previous_location_and_time(logs: DataFrame, window) -> DataFrame:
     """Adds columns with the previous location and time information."""
-    cols_dict = {'location_x': 'prev_x',
-                 'location_y': 'prev_y',
-                 'timespan': 'prev_timespan'}
     return logs\
         .withColumn('prev_x', F.lag('location_x').over(window)) \
         .withColumn('prev_y', F.lag('location_y').over(window)) \
@@ -44,7 +44,7 @@ def calculate_distance(logs: DataFrame) -> DataFrame:
                                   F.pow(logs["location_y"] - logs["prev_y"], 2)))
 
 
-def calculate_time_delta(logs: DataFrame, SECONDS_PER_HOUR: int) -> DataFrame:
+def calculate_time_delta(logs: DataFrame) -> DataFrame:
     """Calculates the time delta between the current and previous location in hours."""
     return logs.withColumn("time_hours",
                            (logs["timespan"] - logs["prev_timespan"]) / SECONDS_PER_HOUR)
@@ -57,12 +57,11 @@ def calculate_speed(logs: DataFrame) -> DataFrame:
 
 def detect_speeding_events(logs: DataFrame) -> DataFrame:
     """Skeleton of template method"""
-    SECONDS_PER_HOUR = 3600
     window = get_same_ride()
 
     logs = add_previous_location_and_time(logs, window)
     logs = calculate_distance(logs)
-    logs = calculate_time_delta(logs, SECONDS_PER_HOUR)
+    logs = calculate_time_delta(logs)
     logs = calculate_speed(logs)
     return logs.withColumn("is_speeding", (logs["speed"] > logs["speed_limit"]))
 
@@ -71,8 +70,9 @@ def detect_speeding_events(logs: DataFrame) -> DataFrame:
 def predict_speeding_event(
         logs_with_speeding: DataFrame, prediction_horizon: int
 ) -> DataFrame:
-    # Code readability is improved by using variables for the column names,
-    # making it easier to maintain the code if the column names change in the future
+    """Code readability is improved by using variables for the column names, 
+    making it easier to maintain the code if the column names change in the future.
+    I just used SQL to demonstre this knowalage, in this case is better use Dataframe API to reuse somethings"""
     same_ride_cols = 'customer_id, driver_id, vehicle_id'
     is_speeding_col = 'is_speeding'
     time_col = 'timespan'
